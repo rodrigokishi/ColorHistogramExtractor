@@ -1,31 +1,44 @@
 package intermidia;
 
-import org.openimaj.image.DisplayUtilities;
+import java.io.FileWriter;
+
+import org.openimaj.feature.DoubleFV;
 import org.openimaj.image.MBFImage;
-import org.openimaj.image.colour.ColourSpace;
-import org.openimaj.image.colour.RGBColour;
-import org.openimaj.image.processing.convolution.FGaussianConvolve;
-import org.openimaj.image.typography.hershey.HersheyFont;
+import org.openimaj.image.pixel.statistics.HistogramModel;
+import org.openimaj.math.statistics.distribution.MultidimensionalHistogram;
+import org.openimaj.video.processing.shotdetector.VideoKeyframe;
 
-/**
- * OpenIMAJ Hello world!
- *
- */
-public class ColorHistogramExtractor {
-    public static void main( String[] args ) {
-    	//Create an image
-        MBFImage image = new MBFImage(320,70, ColourSpace.RGB);
+import TVSSUnits.Shot;
+import TVSSUnits.ShotList;
+import TVSSUtils.KeyframeReader;
 
-        //Fill the image with white
-        image.fill(RGBColour.WHITE);
-        		        
-        //Render some test into the image
-        image.drawText("Hello World", 10, 60, HersheyFont.CURSIVE, 50, RGBColour.BLACK);
-
-        //Apply a Gaussian blur
-        image.processInplace(new FGaussianConvolve(2f));
-        
-        //Display the image
-        DisplayUtilities.display(image);
+public class ColorHistogramExtractor 
+{
+	/*Usage: <in: keyframe folder> <out: histogram values>*/
+    public static void main( String[] args ) throws Exception
+    { 	
+    	ShotList shotList = KeyframeReader.readFromFolder(args[0]);
+    	FileWriter output = new FileWriter(args[1]);
+    	
+    	int shotNum = 0;
+    	HistogramModel histogramModel = new HistogramModel(4,4,4);		
+    	for(Shot shot: shotList.getList())
+    	{ 	
+    		for(VideoKeyframe<MBFImage> keyframe: shot.getKeyFrameList())
+    		{    			
+    			histogramModel.estimateModel(keyframe.imageAtBoundary);
+    			MultidimensionalHistogram histogram = histogramModel.histogram.clone();
+    			    				
+    			DoubleFV histFV = histogram.asDoubleFV();
+    			output.write(Integer.toString(shotNum));
+    			for(double binVal : histFV.values)
+    			{
+    				output.write(" " + binVal);
+    			}
+    			output.write("\n");
+    		}
+    		shotNum++;
+    	}
+    	output.close();
     }
 }
