@@ -33,7 +33,7 @@ public class ColorHistogramExtractor
     			output.write(Integer.toString(shotNum));
     			for(double binVal : histFV.values)
     			{
-    				output.write(" " + binVal);
+    				output.write(" " + ((int)(binVal * 1000)));
     			}
     			output.write("\n");
     		}
